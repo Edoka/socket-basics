@@ -12,9 +12,10 @@ io.on('connection', function (socket) {
 	socket.on('message', function(message) {
 		console.log('Message recieved: ' + message.text);
 		
-		socket.broadcast.emit('message', message); 
-		// to send to everybody but not ourself
+		 // to send to everybody but not ourself
+		//socket.broadcast.emit('message', message);
 		// io.emit()... to send the message to everbody including ourself
+		io.emit('message', message);
 	});
 	
 	socket.emit('message', {
