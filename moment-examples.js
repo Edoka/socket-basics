@@ -1,5 +1,6 @@
 var moment  = require('moment');
 var now = moment();
+console.log(now.valueOf('x'));
 
 // console.log(now.format());
 // console.log(now.format('X'));
