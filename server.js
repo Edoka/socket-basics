@@ -9,6 +9,30 @@ app.use(express.static(__dirname + '/public'));
 
 var clientInfo = {};
 
+//Sends current users to provided socket
+function sendCurrentUsers (socket) {
+	var info = clientInfo[socket.id];
+	var users = [];
+	
+	if (typeof info === 'undefined') {
+		return;
+	}
+	
+	Object.keys(clientInfo).forEach(function (socketId) {
+		var userInfo = clientInfo[socketId];
+		
+		if (info.room === userInfo.room) {
+			users.push(userInfo.name);
+		}
+	});
+	
+	socket.emit('message', {
+		name: 'System',
+		text: 'Current users: ' + users.join(', '),
+		timestamp: moment().valueOf
+	});
+}
+
 io.on('connection', function (socket) {
 	console.log('User connected via socket.io!');
 	
@@ -22,7 +46,7 @@ io.on('connection', function (socket) {
 				text: userData.name + ' has left!',
 				timestamp: moment().valueOf()
 			});
-			delete userData;
+			delete clientInfo[socket.id];
 		}
 	});
 	
@@ -48,12 +72,22 @@ io.on('connection', function (socket) {
 	
 		console.log('Message recieved: ' + message.text);
 		
-		message.timestamp = moment().valueOf();
+		if (message.text === '@currentUsers') {
+			sendCurrentUsers(socket);
+		} else {
+			
+			message.timestamp = moment().valueOf();
+
+			// to send to everybody but not ourself
+			//socket.broadcast.emit('message', message);
+			
+			// io.emit()... to send the message to everbody including ourself
+			io.to(clientInfo[socket.id].room).emit('message', message);
+			//add to() this emit the message only to pple in the room
+
+		}
 		
-		 // to send to everybody but not ourself
-		//socket.broadcast.emit('message', message);
-		// io.emit()... to send the message to everbody including ourself
-		io.to(clientInfo[socket.id].room).emit('message', message); //add to() this emit the message only to pple in the room
+		
 	});
 	
 	socket.emit('message', {
